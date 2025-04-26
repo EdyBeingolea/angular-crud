@@ -9,6 +9,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-product-home',
@@ -17,7 +19,9 @@ import { MatInputModule } from '@angular/material/input';
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    CommonModule,
+    FormsModule
   ],
   templateUrl: './product-home.component.html',
   styleUrl: './product-home.component.scss'
@@ -25,20 +29,29 @@ import { MatInputModule } from '@angular/material/input';
 export class ProductHomeComponent implements OnInit {
   columns: string[] = ['image', 'name', 'description', 'currency', 'price', 'state', 'action'];
   dataSource: Product[] = [];
+  selectedStatus: boolean = true;
+  filterValue: string = '';
 
   productService = inject(ProductService);
   private dialog = inject(MatDialog);
   private snackbar = inject(MatSnackBar);
 
   ngOnInit(): void {
-    this.getAll();
+    this.getProduct();
   }
 
-  getAll(): void {
-    this.productService.getAll().subscribe(res => {
-      console.log('Api response:', res.data);
-      this.dataSource = res.data;
-    })
+  getProduct() {
+    if (this.selectedStatus) {
+      this.productService.getAll().subscribe(res => {
+        console.log('Productos activos:', res.data);
+        this.dataSource = res.data;
+      });
+    } else {
+      this.productService.getInactive().subscribe(res => {
+        console.log('Productos inactivos:', res.data);
+        this.dataSource = res.data;
+      });
+    }
   }
 
   openProductDlg(product?: Product): void {
@@ -49,7 +62,7 @@ export class ProductHomeComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.getAll();
+        this.getProduct();
       }
     });
   }
@@ -57,10 +70,31 @@ export class ProductHomeComponent implements OnInit {
   inactiveProduct(id: number) {
     this.productService.inactive(id).subscribe(res => {
       if (res.status) {
-        this.getAll();
-        this.snackbar.open('Se inactivo el producto', 'Aceptar');
+        this.getProduct();
+        this.snackbar.open('Se inactivó el producto', 'Aceptar');
       }
-    })
+    });
   }
+
+  onStatusChange(event: any) {
+    this.selectedStatus = event.target.value === 'true';
+    this.getProduct();
+  }
+
+  applyFilter() {
+    const filter = this.filterValue.trim().toLowerCase();
+    if (filter === '') {
+      this.getProduct();
+    } else {
+      this.dataSource = this.dataSource.filter((product: Product) => {
+        return (
+          product.name.toLowerCase().includes(filter) ||
+          product.currencyCode.toLowerCase().includes(filter)
+        );
+      });
+    }
+  }
+  
+
 
 }

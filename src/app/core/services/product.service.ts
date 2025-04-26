@@ -14,6 +14,10 @@ export class ProductService {
     return this.http.get<ApiResponse<Product[]>>(`${environment.api}/v1/products?active=true`);
   }
 
+  getInactive() {
+    return this.http.get<ApiResponse<Product[]>>(`${environment.api}/v1/products?active=false`);
+  }
+
   create(request: SaveProduct) {
     return this.http.post<ApiResponse<Product>>(`${environment.api}/v1/products`, request);
   }
